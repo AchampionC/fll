@@ -4,11 +4,13 @@
 
 // Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
 
-Shader "FengLL/Chapter06/L06_Diffuse_Pixel_Level"
+Shader "FengLL/Chapter06/L06_BlinnPhong"
 {
     Properties
     {
-        _Diffuse("Color Tint", Color) = (1.0, 1.0, 1.0, 1.0)
+        _DiffuseCol ("DiffuseCol", Color) = (1.0, 1.0, 1.0, 1.0)
+        _SpecularCol("SpecularCol", Color) = (1.0, 1.0, 1.0, 1.0)
+        _SpecularPow("Gloss", Range(8, 256)) = 20
     }
     SubShader
     {
@@ -24,7 +26,9 @@ Shader "FengLL/Chapter06/L06_Diffuse_Pixel_Level"
 
             #include "UnityCG.cginc"
             #include "Lighting.cginc"
-            fixed4 _Diffuse;
+            float _SpecularPow;
+            fixed4 _DiffuseCol;
+            fixed4 _SpecularCol;
             struct a2v
             {
                 float4 vertex : POSITION;
@@ -49,15 +53,21 @@ Shader "FengLL/Chapter06/L06_Diffuse_Pixel_Level"
 
             fixed4 frag(v2f i) : SV_TARGET // 告诉渲染器, 把用户的颜色存储到Render Target上, 这里将输出到默认的帧缓存中
             {
-                float3 ndirWS = normalize(i.nDirWS);
-                float3 lDir = normalize(_WorldSpaceLightPos0);
                 float3 ambient = UNITY_LIGHTMODEL_AMBIENT;
-                float lambert = max(0, dot(ndirWS, lDir));
-                float3 finalRBG = ambient + _Diffuse.rgb * lambert * _LightColor0.rgb;
+                float3 nDirWS = normalize(i.nDirWS);
+                float3 lDirWS = normalize(_WorldSpaceLightPos0);
+                float3 vDirWS = normalize(_WorldSpaceCameraPos - i.posWS);
+                float3 hDir = normalize(lDirWS + vDirWS);
 
-                return fixed4(finalRBG, 1.0);
+                float3 rlDirWS = normalize(reflect(-lDirWS, nDirWS));
+                float3 ndotl = max(0, dot(nDirWS, lDirWS));
+                float3 lambert = _DiffuseCol * ndotl;
+                float blinnphong = pow(max(0, dot(nDirWS, hDir)), _SpecularPow);
+                fixed3 finalRGB = ambient + _LightColor0.rgb * blinnphong * _SpecularCol + lambert;
+                return fixed4(finalRGB, 1.0);
             }
             ENDCG
         }
     }
+    Fallback "Specular"
 }

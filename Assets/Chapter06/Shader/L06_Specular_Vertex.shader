@@ -72,4 +72,5 @@ Shader "FengLL/Chapter06/L06_Specular_Vertex_Level"
             ENDCG
         }
     }
+    Fallback "Specular"
 }

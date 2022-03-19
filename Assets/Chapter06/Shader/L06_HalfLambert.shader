@@ -35,7 +35,6 @@ Shader "FengLL/Chapter06/L06_HalfLambert"
             {
                 float4 pos : SV_POSITION;
                 float3 nDirWS : TEXCOORD0;
-                fixed3 color : COLOR0;
             };
 
             v2f vert(a2v v) 
